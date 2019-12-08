@@ -1,0 +1,82 @@
+#encoding:UTF-8
+import numpy as np
+import matplotlib.pyplot as plt
+import random
+from tslearn.clustering import KShape
+from tslearn.preprocessing import TimeSeriesScalerMeanVariance
+
+def transform_vector(time_series_array):
+    #ベクトルに変換
+    stack_list = []
+    for j in range(len(time_series_array)):
+        data = np.array(time_series_array[j])
+        data = data.reshape((1, len(data))).T
+        stack_list.append(data)
+    #一次元配列にする
+    stack_data = np.stack(stack_list, axis=0)
+    return stack_data
+
+
+
+list_data = []
+for i in range(1000):
+    list_list = []
+    for i in range(5):
+        x = random.randint(-10,10)
+        list_list.append(x)
+    list_data.append(list_list)
+
+#for i in range(10):
+#    list_list = []
+#    for i in range(10):
+#        x = random.randint(1,2)
+#        list_list.append(x)
+#    list_data.append(list_list)
+
+#for i in range(10):
+#    list_list = []
+#    for i in range(5):
+#        x = random.randint(101,1000)
+#        list_list.append(x)
+#    list_data.append(list_list)
+
+print(list_data)
+
+
+
+
+l_m = 0
+for list in list_data:
+    if l_m < len(list):
+        l_m = len(list)
+
+#for list in tsdata:
+#    for i in range(l_m - len(list)):
+#        list.append(list[-1])
+
+stack_data = transform_vector(list_data)
+
+seed = 0
+np.random.seed(seed)
+#相互相関を計算するために、正規化する必要があります。
+#TimeSeriesScalerMeanVarianceがデータを正規化してくれるクラスになります。
+#stack_data = TimeSeriesScalerMeanVariance(mu=0.0, std=1.0).fit_transform(stack_data)
+
+#クラスタリング数
+class_num = 2
+
+#KShapeクラスのインスタンス化
+ks = KShape(n_clusters=class_num, n_init=10, verbose=True, random_state=seed)
+y_pred = ks.fit_predict(stack_data)
+
+
+#クラスタリングして可視化
+plt.figure(figsize=(16,4))
+for yi in range(class_num):
+    plt.subplot(class_num, 1, 1 + yi)
+    for xx in stack_data[y_pred == yi]:
+        plt.plot(xx.ravel(), "k-", alpha=.2)
+    plt.plot(ks.cluster_centers_[yi].ravel(), "r-")
+    plt.title("Cluster "+str(yi+1)+"    (num"+str(len(stack_data[y_pred == yi]))+")")
+plt.tight_layout()
+plt.show()
